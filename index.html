@@ -198,31 +198,27 @@
             </div>
 
             <div class="tab-pane fade" id="pills-sounds" role="tabpanel">
-                <div class="card shadow h-100">
-                    <div class="card-header bg-dark text-white">
-                        <h5>Налаштування звуків</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label text-muted">Гучність (всі сигнали):</label>
-                            <input type="range" class="form-range" id="soundVol" min="0.1" max="1" step="0.1"
-                                value="0.6">
-                        </div>
-                        <hr class="border-secondary">
-                        <div class="mb-3">
-                            <label class="form-label">Частота (Тон), Гц:</label>
-                            <input type="range" class="form-range" id="soundFreq" min="200" max="1200" step="50"
-                                value="600">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Тривалість сигналу, сек:</label>
-                            <input type="range" class="form-range" id="soundDur" min="0.1" max="1" step="0.1"
-                                value="0.3">
-                        </div>
-                        <button class="btn btn-outline-info w-100" onclick="testSound()">ПЕРЕВІРИТИ ЗВУК</button>
-                    </div>
-                </div>
+    <div class="card shadow h-100">
+        <div class="card-header bg-dark text-white"><h5>Налаштування звуків</h5></div>
+        <div class="card-body">
+            <div id="soundSettingsList">
+                <h6>1. Середина вправи (Midpoint)</h6>
+                <input type="range" class="form-range" id="vol_mid" min="0" max="1" step="0.1" value="0.5">
+                <input type="range" class="form-range" id="freq_mid" min="200" max="1000" step="50" value="300">
+                
+                <hr>
+                <h6>2. Відлік (Countdown)</h6>
+                <input type="range" class="form-range" id="vol_count" min="0" max="1" step="0.1" value="0.6">
+                <input type="range" class="form-range" id="freq_count" min="200" max="1000" step="50" value="500">
+                
+                <hr>
+                <h6>3. Кінець вправи (End)</h6>
+                <input type="range" class="form-range" id="vol_end" min="0" max="1" step="0.1" value="0.7">
+                <input type="range" class="form-range" id="freq_end" min="200" max="1000" step="50" value="700">
             </div>
+        </div>
+    </div>
+</div>
 
             <div class="tab-pane fade" id="pills-timer" role="tabpanel">
                 <div class="card shadow text-center h-100 d-flex flex-column justify-content-between py-4">
@@ -305,24 +301,22 @@
 
         // Тепер звуки динамічно підлаштовуються під те, що ти виставив у вкладці "Звуки"
         const sounds = {
-            midpoint: () => {
-                const s = getSoundSettings();
-                playTone(s.freq * 0.7, s.dur, s.vol); // Трохи нижчий тон для середини
-            },
-            countdown: () => {
-                const s = getSoundSettings();
-                playTone(s.freq, s.dur * 0.5, s.vol); // Коротший сигнал для відліку
-            },
-            exerciseEnd: () => {
-                const s = getSoundSettings();
-                playTone(s.freq * 1.2, s.dur * 1.5, s.vol); // Вищий тон для зміни вправи
-            },
-            cycleEnd: () => {
-                const s = getSoundSettings();
-                playTone(s.freq * 1.5, s.dur * 2, s.vol); // Потужний довгий сигнал
-                setTimeout(() => playTone(s.freq * 1.5, s.dur * 2, s.vol), 400);
-            }
-        };
+    midpoint: () => playTone(
+        document.getElementById('freq_mid').value, 
+        0.3, 
+        document.getElementById('vol_mid').value
+    ),
+    countdown: () => playTone(
+        document.getElementById('freq_count').value, 
+        0.15, 
+        document.getElementById('vol_count').value
+    ),
+    exerciseEnd: () => playTone(
+        document.getElementById('freq_end').value, 
+        0.4, 
+        document.getElementById('vol_end').value
+    )
+};
 
         
         // --- DOM ELEMENTS ---
