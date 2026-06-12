@@ -197,6 +197,33 @@
                 </div>
             </div>
 
+            <div class="tab-pane fade" id="pills-sounds" role="tabpanel">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-dark text-white">
+                        <h5>Налаштування звуків</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Гучність (всі сигнали):</label>
+                            <input type="range" class="form-range" id="soundVol" min="0.1" max="1" step="0.1"
+                                value="0.6">
+                        </div>
+                        <hr class="border-secondary">
+                        <div class="mb-3">
+                            <label class="form-label">Частота (Тон), Гц:</label>
+                            <input type="range" class="form-range" id="soundFreq" min="200" max="1200" step="50"
+                                value="600">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тривалість сигналу, сек:</label>
+                            <input type="range" class="form-range" id="soundDur" min="0.1" max="1" step="0.1"
+                                value="0.3">
+                        </div>
+                        <button class="btn btn-outline-info w-100" onclick="testSound()">ПЕРЕВІРИТИ ЗВУК</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-pane fade" id="pills-timer" role="tabpanel">
                 <div class="card shadow text-center h-100 d-flex flex-column justify-content-between py-4">
                     <div class="card-body d-flex flex-column justify-content-between">
@@ -232,18 +259,12 @@
 
         <div class="card p-2 shadow-lg">
             <ul class="nav nav-pills nav-fill" id="pills-tab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold py-2" id="tab-setup" data-bs-toggle="pill"
-                        data-bs-target="#pills-setup" type="button" role="tab">
-                        ⚙️ Налаштування
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold py-2" id="tab-timer" data-bs-toggle="pill"
-                        data-bs-target="#pills-timer" type="button" role="tab">
-                        ⏱️ Екран Таймера
-                    </button>
-                </li>
+                <li class="nav-item"><button class="nav-link active" id="tab-setup" data-bs-toggle="pill"
+                        data-bs-target="#pills-setup" type="button">⚙️ Вправи</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-sounds" data-bs-toggle="pill"
+                        data-bs-target="#pills-sounds" type="button">🔊 Звуки</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-timer" data-bs-toggle="pill"
+                        data-bs-target="#pills-timer" type="button">⏱️ Таймер</button></li>
             </ul>
         </div>
 
@@ -252,18 +273,27 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // --- AUDIO ENGINE (ГУЧНІШИЙ ТА ПОВІЛЬНІШИЙ) ---
+        // --- AUDIO ENGINE ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        function playTone(freq, duration, volume = 0.6) {
+        // Функція, яка бере значення з наших нових повзунків
+        function getSoundSettings() {
+            return {
+                freq: parseFloat(document.getElementById('soundFreq')?.value) || 600,
+                dur: parseFloat(document.getElementById('soundDur')?.value) || 0.3,
+                vol: parseFloat(document.getElementById('soundVol')?.value) || 0.6
+            };
+        }
+
+        function playTone(freq, duration, volume) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
 
-            // 'triangle' звучить значно гучніше та об'ємніше на телефоні, ніж 'sine'
-            osc.type = 'triangle';
+            osc.type = 'triangle'; // Об'ємний звук
             osc.frequency.value = freq;
 
-            // Налаштування гучності з плавним згасанням, щоб динамік не рипів
             gain.gain.setValueAtTime(volume, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
 
@@ -273,23 +303,28 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // Тепер звуки динамічно підлаштовуються під те, що ти виставив у вкладці "Звуки"
         const sounds = {
-            // Середина вправи: солідний, помірно довгий сигнал (0.3 сек)
-            midpoint: () => playTone(300, 0.3, 0.5),
-
-            // Зворотний відлік (3, 2, 1): чіткі, акцентовані удари (0.15 сек)
-            countdown: () => playTone(500, 0.15, 0.6),
-
-            // Кінець вправи / переходу: триваліший сигнал, що сповіщає про зміну (0.4 сек)
-            exerciseEnd: () => playTone(650, 0.4, 0.7),
-
-            // Кінець усього кола: два потужних, довгих сигнали з паузою
+            midpoint: () => {
+                const s = getSoundSettings();
+                playTone(s.freq * 0.7, s.dur, s.vol); // Трохи нижчий тон для середини
+            },
+            countdown: () => {
+                const s = getSoundSettings();
+                playTone(s.freq, s.dur * 0.5, s.vol); // Коротший сигнал для відліку
+            },
+            exerciseEnd: () => {
+                const s = getSoundSettings();
+                playTone(s.freq * 1.2, s.dur * 1.5, s.vol); // Вищий тон для зміни вправи
+            },
             cycleEnd: () => {
-                playTone(800, 0.35, 0.7);
-                setTimeout(() => playTone(800, 0.5, 0.7), 400); // Другий сигнал довший
+                const s = getSoundSettings();
+                playTone(s.freq * 1.5, s.dur * 2, s.vol); // Потужний довгий сигнал
+                setTimeout(() => playTone(s.freq * 1.5, s.dur * 2, s.vol), 400);
             }
         };
 
+        
         // --- DOM ELEMENTS ---
         const timeEx1 = document.getElementById('timeEx1');
         const timeEx2 = document.getElementById('timeEx2');
@@ -322,6 +357,11 @@
                 inputRestBetween.value = data.restBetween ?? 10;
                 inputCycleRest.value = data.cycleRest ?? 45;
                 inputCycles.value = data.cycles ?? 4;
+
+                // Додай ці три рядки:
+                if (data.soundFreq) document.getElementById('soundFreq').value = data.soundFreq;
+                if (data.soundDur) document.getElementById('soundDur').value = data.soundDur;
+                if (data.soundVol) document.getElementById('soundVol').value = data.soundVol;
             }
         }
 
@@ -332,10 +372,19 @@
                 t3: parseInt(timeEx3.value) || 0,
                 restBetween: parseInt(inputRestBetween.value) || 0,
                 cycleRest: parseInt(inputCycleRest.value) || 0,
-                cycles: parseInt(inputCycles.value) || 1
+                cycles: parseInt(inputCycles.value) || 1,
+                // Додай ці три рядки:
+                soundFreq: document.getElementById('soundFreq').value,
+                soundDur: document.getElementById('soundDur').value,
+                soundVol: document.getElementById('soundVol').value
             };
             localStorage.setItem('workout_timer_settings', JSON.stringify(data));
         }
+
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', saveSettings);
+        });
+
 
         // --- CALCULATION ---
         function updateCalculator() {
